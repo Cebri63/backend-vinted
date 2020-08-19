@@ -18,6 +18,7 @@
     "express-formidable": "^1.2.0",
     "mongoose": "^5.9.26",
     "puppeteer": "^5.2.1",
+    "puppeteer-autoscroll-down": "^0.1.6",
     "uid2": "0.0.3"
   }
 }
