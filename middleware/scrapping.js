@@ -6,7 +6,7 @@ const _ = require("lodash");
 const URL = "https://www.vinted.fr/";
 
 const saveToFile = (file, content) => {
-  fs.writeFile(`./data/${file}`, JSON.stringify(content), (err) => {
+  fs.writeFile(`../data/${file}`, JSON.stringify(content), (err) => {
     console.log(`content saved in ${file}`);
     if (err) return console.log(err);
   });
