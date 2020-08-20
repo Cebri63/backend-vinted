@@ -1,9 +1,17 @@
 const puppeteer = require("puppeteer");
 const scrollPageToBottom = require("puppeteer-autoscroll-down");
+const fs = require("fs");
 
 const URL = "https://www.vinted.fr/";
 
-const getData = async () => {
+const saveToFile = (file, content) => {
+  fs.writeFile(`./data/${file}`, JSON.stringify(content), (err) => {
+    console.log(`content saved in ${file}`);
+    if (err) return console.log(err);
+  });
+};
+
+const scrapHomePage = async () => {
   const browser = await puppeteer.launch({
     headless: false,
   });
@@ -13,7 +21,7 @@ const getData = async () => {
     height: 1600,
   });
   await page.goto(URL, { waitUntil: "domcontentloaded" });
-  await scrollPageToBottom(page);
+  /* await scrollPageToBottom(page); */
   await page.waitFor(".feed-grid__item");
   const data = await page.evaluate(() => {
     const elements = Array.from(document.querySelectorAll(".feed-grid__item"));
@@ -56,10 +64,9 @@ const getData = async () => {
       };
     });
   });
-
-  console.log(data);
+  saveToFile("products.json", data);
 
   await browser.close();
 };
 
-getData();
+scrapHomePage();
