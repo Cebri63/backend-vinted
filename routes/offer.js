@@ -8,7 +8,7 @@ const cloudinary = require("cloudinary").v2;
 
 // Connexion à l'espace de stockage cloudinary
 cloudinary.config({
-  cloud_name: "brice",
+  cloud_name: "lereacteur-apollo",
   api_key: process.env.CLOUDINARY_API_KEY,
   api_secret: process.env.CLOUDINARY_API_SECRET,
 });
@@ -108,7 +108,9 @@ router.post("/offer/publish", isAuthenticated, async (req, res) => {
   // route qui permet de poster une nouvelle annonce
   try {
     // Envoi de l'image à cloudinary
-    const result = await cloudinary.uploader.upload(req.files.picture.path);
+    const result = await cloudinary.uploader.upload(req.files.picture.path, {
+      folder: "vinted",
+    });
 
     // Création de la nouvelle annonce
     const newOffer = new Offer({
