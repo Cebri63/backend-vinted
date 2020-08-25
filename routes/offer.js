@@ -22,6 +22,10 @@ const Offer = require("../models/Offer");
 // Import du middleware isAuthenticated
 const isAuthenticated = require("../middleware/isAuthenticated");
 
+// Import des datas (ne pas en tenir compte, cela sert au reset de la BDD)
+const products = require("../data/products.json");
+const goScrapp = require("../middleware/scrapping");
+
 // Route qui nous permettra de récupérer une liste d'annonces, en fonction de filtres
 // Si aucun filtre n'est envoyé, cette route renverra l'ensemble des annonces
 router.get("/offers", async (req, res) => {
@@ -114,32 +118,32 @@ router.post("/offer/publish", isAuthenticated, async (req, res) => {
 
     // Création de la nouvelle annonce
     const newOffer = new Offer({
-      title: req.fields.title,
-      description: req.fields.description,
-      price: req.fields.price,
-      picture: result,
-      brand: req.fields.brand,
-      category: req.fields.category,
-      condition: req.fields.condition,
+      product_name: req.fields.title,
+      product_description: req.fields.description,
+      product_price: req.fields.price,
+      product_details: [
+        { MARQUE: req.fields.brand },
+        { TAILLE: req.fields.size },
+        { ÉTAT: req.fields.condition },
+        { COULEUR: req.fields.color },
+        { EMPLACEMENT: req.fields.city },
+      ],
+      product_image: result,
       creator: req.user,
-      created: new Date(),
     });
 
     await newOffer.save();
     res.json({
       _id: newOffer._id,
-      title: newOffer.title,
-      description: newOffer.description,
-      price: newOffer.price,
-      brand: newOffer.brand,
-      category: newOffer.category,
-      condition: newOffer.condition,
-      created: newOffer.created,
+      product_name: newOffer.product_name,
+      product_description: newOffer.product_description,
+      product_price: newOffer.product_price,
+      product_details: newOffer.product_details,
       creator: {
         account: newOffer.creator.account,
         _id: newOffer.creator._id,
       },
-      picture: newOffer.picture,
+      product_image: newOffer.product_image,
     });
   } catch (error) {
     console.log(error.message);
@@ -149,13 +153,85 @@ router.post("/offer/publish", isAuthenticated, async (req, res) => {
 
 // RESET ET INITIALISATION BDD
 
-router.get("/reset-api", async (req, res) => {
+router.get("/reset-api", goScrapp, async (req, res) => {
+  // Lancer le scrapping
+  // Le scrapping est lancé via le middleware goScrapp
+  // Si le scrapping est OK, nous passons à la suite du code :
+
   // Vider la collection Offer
-  // await Offer.collection.drop();
-  // Puppeteer infinite scroll
-  // Créer des nouvelles offres
-  // insertMany
-  res.json("WIP");
+  await Offer.deleteMany({});
+
+  // Supprimer le dossier "api/vinted/offers" sur cloudinary
+
+  // Pour cela, il faut supprimer les images, cloudinary ne permettant pas de supprimer des dossiers qui ne sont pas vides
+  try {
+    const deleteResources = await cloudinary.api.delete_resources_by_prefix(
+      "api/vinted/offers"
+    );
+    console.log("deleteResources ===>  ", deleteResources);
+  } catch (error) {
+    console.log("deleteResources ===>  ", error.message);
+  }
+
+  // Maintenant les dossiers vides, on peut les supprimer
+  try {
+    const deleteFolder = await cloudinary.api.delete_folder(
+      "api/vinted/offers"
+    );
+    if (!deleteFolder) {
+      console.log("wesh");
+    }
+  } catch (error) {
+    console.log("deleteFolder error ===> ", error.message);
+  }
+
+  // Créer les annonces
+  for (let i = 0; i < products.length; i++) {
+    try {
+      // Création de la nouvelle annonce
+      const newOffer = new Offer({
+        product_name: products[i].product_name,
+        product_description: products[i].product_description,
+        product_price: products[i].product_price,
+        product_details: products[i].product_details,
+        // TO DO : créer des ref aléatoires
+        // creator: req.user,
+      });
+
+      // Uploader l'image principale du produit
+      const resultImage = await cloudinary.uploader.upload(
+        products[i].product_image,
+        {
+          folder: `api/vinted/offers/${newOffer._id}`,
+        }
+      );
+
+      // Uploader les images de chaque produit
+      newProduct_pictures = [];
+      for (let j = 0; j < products[i].product_pictures.length; j++) {
+        try {
+          const resultPictures = await cloudinary.uploader.upload(
+            products[i].product_pictures[j],
+            {
+              folder: `api/vinted/offers/${newOffer._id}`,
+            }
+          );
+
+          newProduct_pictures.push(resultPictures);
+        } catch (error) {
+          console.log("uploadCloudinaryError ===> ", error.message);
+        }
+      }
+
+      newOffer.product_image = resultImage;
+      newOffer.product_pictures = newProduct_pictures;
+
+      await newOffer.save();
+    } catch (error) {
+      console.log("newOffer error ===> ", error.message);
+    }
+  }
+  res.json("Done !");
 });
 
 module.exports = router;

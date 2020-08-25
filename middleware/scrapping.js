@@ -49,7 +49,7 @@ const scrapHomePage = async () => {
             element
               .querySelector(".c-box__title")
               .innerText.replace(" €", "")
-              .replace(",", "."),
+              .replace(",", ".")
           )
         : null;
       return {
@@ -79,18 +79,18 @@ const scrapProduct = async (url) => {
   await page.waitFor(".details-list--info");
   const product = await page.evaluate(() => {
     const product_name = document.querySelector(
-      ".details-list--info div[itemprop='name']",
+      ".details-list--info div[itemprop='name']"
     ).innerText;
     const product_description = document.querySelector(
-      ".details-list--info .u-text-wrap",
+      ".details-list--info .u-text-wrap"
     ).innerText;
     const product_pictures = Array.from(
-      document.querySelectorAll(".item-photo"),
+      document.querySelectorAll(".item-photo")
     ).map((element) => {
       return element.querySelector("a").getAttribute("href");
     });
     const product_details = Array.from(
-      document.querySelectorAll(".details-list__item"),
+      document.querySelectorAll(".details-list__item")
     )
       .map((element) => {
         return {
@@ -100,15 +100,14 @@ const scrapProduct = async (url) => {
                   .querySelector("div:last-child")
                   .innerText.slice(
                     0,
-                    element.querySelector("div:last-child").innerText.length -
-                      8,
+                    element.querySelector("div:last-child").innerText.length - 8
                   )
               : element.querySelector("div:last-child").innerText,
         };
       })
       .splice(
         2,
-        Array.from(document.querySelectorAll(".details-list__item")).length - 6,
+        Array.from(document.querySelectorAll(".details-list__item")).length - 6
       );
     return {
       product_name,
@@ -122,7 +121,7 @@ const scrapProduct = async (url) => {
 };
 
 const scrapOwner = async (url) => {
-  console.log({ url });
+  // console.log({ url });
   if (url) {
     const browser = await puppeteer.launch({
       headless: false,
@@ -136,7 +135,7 @@ const scrapOwner = async (url) => {
     await page.waitFor(".profile__info");
     const owner = await page.evaluate(() => {
       const owner_image = document.querySelector(
-        ".profile__info img:first-child",
+        ".profile__info img:first-child"
       )
         ? document
             .querySelector(".profile__info img:first-child")
@@ -147,17 +146,17 @@ const scrapOwner = async (url) => {
           : null
         : null;
       const owner_name = document.querySelector(
-        ".profile__info .u-overflow-hidden:first-child .u-flexbox span:first-child",
+        ".profile__info .u-overflow-hidden:first-child .u-flexbox span:first-child"
       )
         ? document.querySelector(
-            ".profile__info .u-overflow-hidden:first-child .u-flexbox span:first-child",
+            ".profile__info .u-overflow-hidden:first-child .u-flexbox span:first-child"
           ).innerText
         : null;
       const owner_rating = document.querySelectorAll(
-        ".profile__info .c-rating__star--full",
+        ".profile__info .c-rating__star--full"
       )
         ? Array.from(
-            document.querySelectorAll(".profile__info .c-rating__star--full"),
+            document.querySelectorAll(".profile__info .c-rating__star--full")
           ).length +
           (document.querySelector(".profile__info .c-rating__star--half-full")
             ? 0.5
@@ -174,25 +173,34 @@ const scrapOwner = async (url) => {
   }
 };
 
-(async () => {
-  const products = await scrapHomePage();
-  // SCRAP PRODUCTS
-  for (let i = 0; i < products.length; i++) {
-    const { product_link } = products[i];
-    const product = await scrapProduct(product_link);
-    products[i] = { ...products[i], ...product };
-    console.log(products[i]);
-  }
-  saveToFile("products.json", products);
-  // SCRAP OWNERS
-  const owners = [];
-  for (let i = 0; i < products.length; i++) {
-    const { owner_link, owner_name } = products[i];
-    if (!_.find(owners, { name: owner_name }) && owner_link) {
-      const owner = await scrapOwner(owner_link);
-      owners.push(owner);
-      console.log(owner);
+const goScrapp = async (req, res, next) => {
+  try {
+    const products = await scrapHomePage();
+    // SCRAP PRODUCTS
+    for (let i = 0; i < products.length; i++) {
+      const { product_link } = products[i];
+      const product = await scrapProduct(product_link);
+      products[i] = { ...products[i], ...product };
+      // console.log(products[i]);
     }
+    saveToFile("products.json", products);
+    // SCRAP OWNERS
+    const owners = [];
+    for (let i = 0; i < products.length; i++) {
+      const { owner_link, owner_name } = products[i];
+      if (!_.find(owners, { name: owner_name }) && owner_link) {
+        const owner = await scrapOwner(owner_link);
+        owners.push(owner);
+        // console.log(owner);
+      }
+    }
+    saveToFile("owners.json", owners);
+    next();
+  } catch (error) {
+    return res
+      .status(400)
+      .json({ error: "An error occured when scrapping ==> " + error.message });
   }
-  saveToFile("owners.json", owners);
-})();
+};
+
+module.exports = goScrapp;
