@@ -104,12 +104,7 @@ router.get("/offer/:id", async (req, res) => {
 router.post("/offer/publish", isAuthenticated, async (req, res) => {
   // route qui permet de poster une nouvelle annonce
   try {
-    // Envoi de l'image à cloudinary
-    const result = await cloudinary.uploader.upload(req.files.picture.path, {
-      folder: "vinted",
-    });
-
-    // Création de la nouvelle annonce
+    // Création de la nouvelle annonce (sans l'image)
     const newOffer = new Offer({
       product_name: req.fields.title,
       product_description: req.fields.description,
@@ -121,20 +116,29 @@ router.post("/offer/publish", isAuthenticated, async (req, res) => {
         { COULEUR: req.fields.color },
         { EMPLACEMENT: req.fields.city },
       ],
-      product_image: result,
-      creator: req.user,
+      owner: req.user,
     });
 
+    // Envoi de l'image à cloudinary
+    const result = await cloudinary.uploader.upload(req.files.picture.path, {
+      folder: `api/vinted/offers/${newOffer._id}`,
+      public_id: "preview",
+    });
+
+    // ajout de l'image dans newOffer
+    newOffer.product_image = result;
+
     await newOffer.save();
+
     res.json({
       _id: newOffer._id,
       product_name: newOffer.product_name,
       product_description: newOffer.product_description,
       product_price: newOffer.product_price,
       product_details: newOffer.product_details,
-      creator: {
-        account: newOffer.creator.account,
-        _id: newOffer.creator._id,
+      owner: {
+        account: newOffer.owner.account,
+        _id: newOffer.owner._id,
       },
       product_image: newOffer.product_image,
     });
@@ -145,13 +149,7 @@ router.post("/offer/publish", isAuthenticated, async (req, res) => {
 });
 
 // RESET ET INITIALISATION BDD
-
 router.get("/reset-offers", goScrapp, async (req, res) => {
-  // Lancer le scrapping
-  // Le scrapping est lancé via le middleware goScrapp
-  // Si le scrapping est OK, nous passons à la suite du code :
-
-  // On vérifie qu'il y a bien des users dans la BDD
   const allUserId = await User.find().select("_id");
   // console.log(allUserId);
   if (allUserId.length === 0) {
@@ -163,7 +161,6 @@ router.get("/reset-offers", goScrapp, async (req, res) => {
     await Offer.deleteMany({});
 
     // Supprimer le dossier "api/vinted/offers" sur cloudinary
-
     // Pour cela, il faut supprimer les images, cloudinary ne permettant pas de supprimer des dossiers qui ne sont pas vides
     try {
       const deleteResources = await cloudinary.api.delete_resources_by_prefix(
