@@ -2,13 +2,17 @@ const puppeteer = require("puppeteer");
 const scrollPageToBottom = require("puppeteer-autoscroll-down");
 const fs = require("fs");
 const _ = require("lodash");
+const appRoot = require("app-root-path");
 
 const URL = "https://www.vinted.fr/";
 
 const saveToFile = (file, content) => {
-  fs.writeFile(`../data/${file}`, JSON.stringify(content), (err) => {
-    console.log(`content saved in ${file}`);
-    if (err) return console.log(err);
+  fs.writeFile(`${appRoot}/data/${file}`, JSON.stringify(content), (err) => {
+    if (err) {
+      return console.log(err);
+    } else {
+      console.log(`content saved in ${file}`);
+    }
   });
 };
 
@@ -23,7 +27,7 @@ const scrapHomePage = async () => {
   });
   await page.goto(URL, { waitUntil: "domcontentloaded" });
   /* await scrollPageToBottom(page); */
-  await page.waitFor(".feed-grid__item");
+  await page.waitForSelector(".feed-grid__item");
   const products = await page.evaluate(() => {
     const elements = Array.from(document.querySelectorAll(".feed-grid__item"));
     return elements.map((element) => {
@@ -49,7 +53,7 @@ const scrapHomePage = async () => {
             element
               .querySelector(".c-box__title")
               .innerText.replace(" €", "")
-              .replace(",", "."),
+              .replace(",", ".")
           )
         : null;
       return {
@@ -63,6 +67,7 @@ const scrapHomePage = async () => {
     });
   });
   await browser.close();
+  console.log("scrapHomePage finished");
   return products;
 };
 
@@ -76,21 +81,26 @@ const scrapProduct = async (url) => {
     height: 1600,
   });
   await page.goto(url, { waitUntil: "domcontentloaded" });
-  await page.waitFor(".details-list--info");
+  await page.waitForSelector(".details-list--info");
   const product = await page.evaluate(() => {
     const product_name = document.querySelector(
-      ".details-list--info div[itemprop='name']",
-    ).innerText;
+      ".details-list--info div[itemprop='name']"
+    )
+      ? document.querySelector(".details-list--info div[itemprop='name']")
+          .innerText
+      : null;
     const product_description = document.querySelector(
-      ".details-list--info .u-text-wrap",
-    ).innerText;
+      ".details-list--info .u-text-wrap"
+    )
+      ? document.querySelector(".details-list--info .u-text-wrap").innerText
+      : null;
     const product_pictures = Array.from(
-      document.querySelectorAll(".item-photo"),
+      document.querySelectorAll(".item-photo")
     ).map((element) => {
       return element.querySelector("a").getAttribute("href");
     });
     const product_details = Array.from(
-      document.querySelectorAll(".details-list__item"),
+      document.querySelectorAll(".details-list__item")
     )
       .map((element) => {
         return {
@@ -100,15 +110,14 @@ const scrapProduct = async (url) => {
                   .querySelector("div:last-child")
                   .innerText.slice(
                     0,
-                    element.querySelector("div:last-child").innerText.length -
-                      8,
+                    element.querySelector("div:last-child").innerText.length - 8
                   )
               : element.querySelector("div:last-child").innerText,
         };
       })
       .splice(
         2,
-        Array.from(document.querySelectorAll(".details-list__item")).length - 6,
+        Array.from(document.querySelectorAll(".details-list__item")).length - 6
       );
     return {
       product_name,
@@ -118,25 +127,29 @@ const scrapProduct = async (url) => {
     };
   });
   await browser.close();
+  console.log("scrapProduct finished");
   return product;
 };
 
 const scrapOwner = async (url) => {
-  console.log({ url });
+  // console.log({ url });
   if (url) {
     const browser = await puppeteer.launch({
       headless: false,
     });
     const page = await browser.newPage();
+
     await page.setViewport({
       width: 1600,
       height: 1600,
     });
+
     await page.goto(url, { waitUntil: "domcontentloaded" });
-    await page.waitFor(".profile__info");
+    await page.waitForSelector(".profile__info");
+
     const owner = await page.evaluate(() => {
       const owner_image = document.querySelector(
-        ".profile__info img:first-child",
+        ".profile__info img:first-child"
       )
         ? document
             .querySelector(".profile__info img:first-child")
@@ -147,17 +160,17 @@ const scrapOwner = async (url) => {
           : null
         : null;
       const owner_name = document.querySelector(
-        ".profile__info .u-overflow-hidden:first-child .u-flexbox span:first-child",
+        ".profile__info .u-overflow-hidden:first-child .u-flexbox span:first-child"
       )
         ? document.querySelector(
-            ".profile__info .u-overflow-hidden:first-child .u-flexbox span:first-child",
+            ".profile__info .u-overflow-hidden:first-child .u-flexbox span:first-child"
           ).innerText
         : null;
       const owner_rating = document.querySelectorAll(
-        ".profile__info .c-rating__star--full",
+        ".profile__info .c-rating__star--full"
       )
         ? Array.from(
-            document.querySelectorAll(".profile__info .c-rating__star--full"),
+            document.querySelectorAll(".profile__info .c-rating__star--full")
           ).length +
           (document.querySelector(".profile__info .c-rating__star--half-full")
             ? 0.5
@@ -170,29 +183,41 @@ const scrapOwner = async (url) => {
       };
     });
     await browser.close();
+    console.log("scrapOwner finished");
+
     return owner;
   }
 };
 
-(async () => {
-  const products = await scrapHomePage();
-  // SCRAP PRODUCTS
-  for (let i = 0; i < products.length; i++) {
-    const { product_link } = products[i];
-    const product = await scrapProduct(product_link);
-    products[i] = { ...products[i], ...product };
-    console.log(products[i]);
-  }
-  saveToFile("products.json", products);
-  // SCRAP OWNERS
-  const owners = [];
-  for (let i = 0; i < products.length; i++) {
-    const { owner_link, owner_name } = products[i];
-    if (!_.find(owners, { name: owner_name }) && owner_link) {
-      const owner = await scrapOwner(owner_link);
-      owners.push(owner);
-      console.log(owner);
+const goScrapp = async (req, res, next) => {
+  try {
+    const products = await scrapHomePage();
+
+    // SCRAP PRODUCTS
+    for (let i = 0; i < products.length; i++) {
+      const { product_link } = products[i];
+      const product = await scrapProduct(product_link);
+      products[i] = { ...products[i], ...product };
+      // console.log(products[i]);
     }
+    saveToFile("products.json", products);
+    // SCRAP OWNERS
+    const owners = [];
+    for (let i = 0; i < products2.length; i++) {
+      const { owner_link, owner_name } = products2[i];
+      if (!_.find(owners, { name: owner_name }) && owner_link) {
+        const owner = await scrapOwner(owner_link);
+        owners.push(owner);
+        // console.log(owner);
+      }
+    }
+    saveToFile("owners.json", owners);
+    next();
+  } catch (error) {
+    return res
+      .status(400)
+      .json({ error: "An error occured when scrapping ==> " + error.message });
   }
-  saveToFile("owners.json", owners);
-})();
+};
+
+module.exports = goScrapp;

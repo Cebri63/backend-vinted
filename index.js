@@ -3,6 +3,7 @@ const mongoose = require("mongoose");
 const formidable = require("express-formidable");
 const cors = require("cors");
 const app = express();
+const cloudinary = require("cloudinary").v2;
 app.use(formidable());
 app.use(cors());
 
@@ -15,6 +16,13 @@ mongoose.connect(process.env.MONGODB_URI, {
   useCreateIndex: true,
 });
 
+// Connexion à l'espace de stockage cloudinary
+cloudinary.config({
+  cloud_name: "lereacteur-apollo",
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET,
+});
+
 const userRoutes = require("./routes/user");
 const offerRoutes = require("./routes/offer");
 app.use(userRoutes);
@@ -24,6 +32,7 @@ app.get("/", (req, res) => {
   res.json("Bienvenue sur l'API de Vinted");
 });
 
-app.listen(process.env.PORT, () => {
+const server = app.listen(process.env.PORT, () => {
   console.log("Server started");
 });
+server.timeout = Number(process.env.SERVER_TIMEOUT) || 1000000;

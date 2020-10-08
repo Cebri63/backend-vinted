@@ -6,23 +6,20 @@ const router = express.Router();
 // Import du package cloudinary
 const cloudinary = require("cloudinary").v2;
 
-// Connexion à l'espace de stockage cloudinary
-cloudinary.config({
-  cloud_name: "lereacteur-apollo",
-  api_key: process.env.CLOUDINARY_API_KEY,
-  api_secret: process.env.CLOUDINARY_API_SECRET,
-});
-
 // Import du model User et Offer
 // afin d'éviter des erreurs (notamment dues à d'eventuelles références entre les collections)
-// nous vous conseillons d'importer touts vos models dans toutes vos routes
+// nous vous conseillons d'importer tous vos models dans toutes vos routes
 const User = require("../models/User");
 const Offer = require("../models/Offer");
 
 // Import du middleware isAuthenticated
 const isAuthenticated = require("../middleware/isAuthenticated");
 
-// Route qui nous permettra de récupérer une liste d'annonces, en fonction de filtres
+// Import des datas (ne pas en tenir compte, cela sert au reset de la BDD entre 2 sessions de formation)
+const products = require("../data/products.json");
+const goScrapp = require("../middleware/scrapping");
+
+// Route qui nous permet de récupérer une liste d'annonces, en fonction de filtres
 // Si aucun filtre n'est envoyé, cette route renverra l'ensemble des annonces
 router.get("/offers", async (req, res) => {
   try {
@@ -73,8 +70,8 @@ router.get("/offers", async (req, res) => {
       .skip((page - 1) * limit)
       .limit(limit)
       .populate({
-        path: "creator",
-        select: "account.username account.phone",
+        path: "owner",
+        select: "account.username account.phone account.avatar",
       });
 
     // cette ligne va nous retourner le nombre d'annonces trouvées en fonction des filtres
@@ -90,12 +87,12 @@ router.get("/offers", async (req, res) => {
   }
 });
 
+// Route qui permmet de récupérer les informations d'une offre en fonction de son id
 router.get("/offer/:id", async (req, res) => {
-  // route qui permmet de récupérer les informations d'une offre en fonction de son id
   try {
     const offer = await Offer.findById(req.params.id).populate({
-      path: "creator",
-      select: "account.username account.phone",
+      path: "owner",
+      select: "account.username account.phone account.avatar",
     });
     res.json(offer);
   } catch (error) {
@@ -107,39 +104,43 @@ router.get("/offer/:id", async (req, res) => {
 router.post("/offer/publish", isAuthenticated, async (req, res) => {
   // route qui permet de poster une nouvelle annonce
   try {
+    // Création de la nouvelle annonce (sans l'image)
+    const newOffer = new Offer({
+      product_name: req.fields.title,
+      product_description: req.fields.description,
+      product_price: req.fields.price,
+      product_details: [
+        { MARQUE: req.fields.brand },
+        { TAILLE: req.fields.size },
+        { ÉTAT: req.fields.condition },
+        { COULEUR: req.fields.color },
+        { EMPLACEMENT: req.fields.city },
+      ],
+      owner: req.user,
+    });
+
     // Envoi de l'image à cloudinary
     const result = await cloudinary.uploader.upload(req.files.picture.path, {
-      folder: "vinted",
+      folder: `api/vinted/offers/${newOffer._id}`,
+      public_id: "preview",
     });
 
-    // Création de la nouvelle annonce
-    const newOffer = new Offer({
-      title: req.fields.title,
-      description: req.fields.description,
-      price: req.fields.price,
-      picture: result,
-      brand: req.fields.brand,
-      category: req.fields.category,
-      condition: req.fields.condition,
-      creator: req.user,
-      created: new Date(),
-    });
+    // ajout de l'image dans newOffer
+    newOffer.product_image = result;
 
     await newOffer.save();
+
     res.json({
       _id: newOffer._id,
-      title: newOffer.title,
-      description: newOffer.description,
-      price: newOffer.price,
-      brand: newOffer.brand,
-      category: newOffer.category,
-      condition: newOffer.condition,
-      created: newOffer.created,
-      creator: {
-        account: newOffer.creator.account,
-        _id: newOffer.creator._id,
+      product_name: newOffer.product_name,
+      product_description: newOffer.product_description,
+      product_price: newOffer.product_price,
+      product_details: newOffer.product_details,
+      owner: {
+        account: newOffer.owner.account,
+        _id: newOffer.owner._id,
       },
-      picture: newOffer.picture,
+      product_image: newOffer.product_image,
     });
   } catch (error) {
     console.log(error.message);
@@ -148,14 +149,87 @@ router.post("/offer/publish", isAuthenticated, async (req, res) => {
 });
 
 // RESET ET INITIALISATION BDD
+router.get("/reset-offers", goScrapp, async (req, res) => {
+  const allUserId = await User.find().select("_id");
+  // console.log(allUserId);
+  if (allUserId.length === 0) {
+    return res.send(
+      "Il faut d'abord reset la BDD de users. Voir la route /reset-users"
+    );
+  } else {
+    // Vider la collection Offer
+    await Offer.deleteMany({});
 
-router.get("/reset-api", async (req, res) => {
-  // Vider la collection Offer
-  // await Offer.collection.drop();
-  // Puppeteer infinite scroll
-  // Créer des nouvelles offres
-  // insertMany
-  res.json("WIP");
+    // Supprimer le dossier "api/vinted/offers" sur cloudinary
+    // Pour cela, il faut supprimer les images, cloudinary ne permettant pas de supprimer des dossiers qui ne sont pas vides
+    try {
+      const deleteResources = await cloudinary.api.delete_resources_by_prefix(
+        "api/vinted/offers"
+      );
+    } catch (error) {
+      console.log("deleteResources ===>  ", error.message);
+    }
+
+    // Maintenant les dossiers vides, on peut les supprimer
+    try {
+      const deleteFolder = await cloudinary.api.delete_folder(
+        "api/vinted/offers"
+      );
+    } catch (error) {
+      console.log("deleteFolder error ===> ", error.message);
+    }
+
+    // // Créer les annonces
+    for (let i = 0; i < products.length; i++) {
+      try {
+        // Création de la nouvelle annonce
+        const newOffer = new Offer({
+          product_name: products[i].product_name,
+          product_description: products[i].product_description,
+          product_price: products[i].product_price,
+          product_details: products[i].product_details,
+          // créer des ref aléatoires
+          owner: allUserId[Math.floor(Math.random() * allUserId.length + 1)],
+        });
+
+        // Uploader l'image principale du produit
+        const resultImage = await cloudinary.uploader.upload(
+          products[i].product_image,
+          {
+            folder: `api/vinted/offers/${newOffer._id}`,
+            public_id: "preview",
+          }
+        );
+
+        // Uploader les images de chaque produit
+        newProduct_pictures = [];
+        for (let j = 0; j < products[i].product_pictures.length; j++) {
+          try {
+            const resultPictures = await cloudinary.uploader.upload(
+              products[i].product_pictures[j],
+              {
+                folder: `api/vinted/offers/${newOffer._id}`,
+              }
+            );
+
+            newProduct_pictures.push(resultPictures);
+          } catch (error) {
+            console.log("uploadCloudinaryError ===> ", error.message);
+          }
+        }
+
+        newOffer.product_image = resultImage;
+        newOffer.product_pictures = newProduct_pictures;
+
+        await newOffer.save();
+        console.log(`✅ offer saved : ${i + 1} / ${products.length}`);
+      } catch (error) {
+        console.log("newOffer error ===> ", error.message);
+      }
+    }
+    res.send("Done !");
+    console.log(`🍺 All offers saved !`);
+  }
 });
 
 module.exports = router;
