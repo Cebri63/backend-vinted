@@ -1,61 +1,62 @@
 [
-  { "owner_image": null, "owner_name": "martamora15", "owner_rating": 0 },
+  {
+    "owner_image": "https://images.vinted.net/thumbs/f800/01_01cef_fLnDLKrA4kuBcM1BsXyw5faq.jpeg?1602001428-50d1a222e975f4ca20294a9e2cec0fefc55d5c87",
+    "owner_name": "babethdkk",
+    "owner_rating": 1
+  },
+  { "owner_image": null, "owner_name": "audreydem76", "owner_rating": 0 },
+  {
+    "owner_image": "https://images.vinted.net/thumbs/f800/03e62_MMduPtHefchjCYXT5QhEPT1s.jpeg?1535011038-c1161a6defb8f6e4a177924c64f0d54ab322ab3d",
+    "owner_name": "cilepira",
+    "owner_rating": 5
+  },
+  {
+    "owner_image": "https://images.vinted.net/thumbs/f800/00_06272_uCp5GU5GsQP2w5KwnFx4pwCP.jpeg?1590931429-43af296cb9e1a4858277c1652f4085361d3d0688",
+    "owner_name": "lorenalasheras",
+    "owner_rating": 5
+  },
+  { "owner_image": null, "owner_name": "catikks", "owner_rating": 5 },
+  {
+    "owner_image": "https://images.vinted.net/thumbs/f800/01_00abe_4MqrG7A44TwmPvGZR4apQ5Zh.jpeg?1599510240-060bcf7cb23d92eb6d7b8cb9bf0123a38e5d6c45",
+    "owner_name": "tanny3110",
+    "owner_rating": 5
+  },
+  { "owner_image": null, "owner_name": null, "owner_rating": 0 },
+  { "owner_image": null, "owner_name": null, "owner_rating": 0 },
+  { "owner_image": null, "owner_name": null, "owner_rating": 0 },
   { "owner_image": null, "owner_name": null, "owner_rating": 0 },
   {
-    "owner_image": "https://images.vinted.net/thumbs/f800/00_055ed_kEf8ZuRFEER7LkNrmYJdUttT.jpeg?1591376225-8545b6f5a6e87953f78c820dba76f3a5eb7f670c",
-    "owner_name": "suzannebaj",
-    "owner_rating": 4.5
+    "owner_image": "https://images.vinted.net/thumbs/f800/03b09_nWu7gJCSaeQSzjBsvRS4q6dX.jpeg?1521063700-00cdf3fcb8b2eb8c1431ac688f1f7235c2c80ab1",
+    "owner_name": "tifanys",
+    "owner_rating": 5
   },
-  { "owner_image": null, "owner_name": "femkeanna03", "owner_rating": 0 },
   {
-    "owner_image": "https://images.vinted.net/thumbs/f800/01_014a0_vKyWvp9ywULkGzrZHP4WmzKv.jpeg?1597647680-a65f69cc48ff69c79521fec5ce6f19882ec406ca",
-    "owner_name": "mayte.c",
+    "owner_image": "https://images.vinted.net/thumbs/f800/06235_vTq17K6kjhYNecoTfvfVhP5n.jpeg?1576359424-5950d1d4391e0090a9137b3a229534540c0b4e13",
+    "owner_name": "denizsevim",
+    "owner_rating": 5
+  },
+  { "owner_image": null, "owner_name": null, "owner_rating": 0 },
+  { "owner_image": null, "owner_name": null, "owner_rating": 0 },
+  { "owner_image": null, "owner_name": "margaux2181", "owner_rating": 5 },
+  {
+    "owner_image": "https://images.vinted.net/thumbs/f800/01_00df3_1g2cbUQvCeQi8wbDbNEwPdGe.jpeg?1594067739-69e073acc5b7f6216eb7cc474246a22e166e6e52",
+    "owner_name": "fina94200",
+    "owner_rating": 3.5
+  },
+  {
+    "owner_image": "https://images.vinted.net/thumbs/f800/02caf_FXZbrNycPvaLFdcp9PpsaGbR.jpeg?1557919550-5eb4194f512011182d54b44bdeb261bc3781e412",
+    "owner_name": "bettiemtp",
+    "owner_rating": 5
+  },
+  {
+    "owner_image": "https://images.vinted.net/thumbs/f800/000b7_2qsa5NNu5TY7rvW6dvo9bzdb.jpeg?1510342567-f2fa5db14aff949c4ddff0b46c7c6dc6b8d444d5",
+    "owner_name": "marine.nicolle",
+    "owner_rating": 5
+  },
+  {
+    "owner_image": null,
+    "owner_name": "maeflorence.standley",
     "owner_rating": 0
   },
-  {
-    "owner_image": "https://images.vinted.net/thumbs/f800/01_02209_B1avvpdNs7VjbgVikpCzhkLB.jpeg?1596037890-bdc4c0a2ebff35a0b42a084c5e5ad219e926a1ba",
-    "owner_name": "pijipa",
-    "owner_rating": 5
-  },
-  {
-    "owner_image": "https://images.vinted.net/thumbs/f800/01_026c3_vUc2AhJtQhDLfNC5yg6FeBFB.jpeg?1597757363-10f414f5241084beb7f20bccac9117ac4286ecf4",
-    "owner_name": "mariexdewolf",
-    "owner_rating": 5
-  },
-  {
-    "owner_image": "https://images.vinted.net/thumbs/f800/01_01bf8_sSpzSRydJavRNj6FCrhwjFTn.jpeg?1597920413-6ef3e6344eb5b3fd50c37946bdb0c74faf685076",
-    "owner_name": "kathinkakorten",
-    "owner_rating": 0
-  },
-  {
-    "owner_image": "https://images.vinted.net/thumbs/f800/041b1_pM5gcyRtMBgbAN3SgcnZURiX.jpeg?1566213913-d29213a4f22880b98b1d1b9fe248a4453a161706",
-    "owner_name": "no.brtn",
-    "owner_rating": 4.5
-  },
-  { "owner_image": null, "owner_name": null, "owner_rating": 0 },
-  { "owner_image": null, "owner_name": null, "owner_rating": 0 },
-  { "owner_image": null, "owner_name": null, "owner_rating": 0 },
-  {
-    "owner_image": "https://images.vinted.net/thumbs/f800/0263d_Y7vnQ5fN46uJAAXzXkHrw1eC.jpeg?1570297045-e5c399ce1320839565ea377b4c1468fd5e8535a1",
-    "owner_name": "melany1414",
-    "owner_rating": 5
-  },
-  {
-    "owner_image": "https://images.vinted.net/thumbs/f800/033c8_UZk4CsUrwn9fyv8qqrugb5zb.jpeg?1552633188-4f18ecf3cca303c8aae5526a2ee2d62ea2ae3100",
-    "owner_name": "rillaert_brigitte",
-    "owner_rating": 0
-  },
-  { "owner_image": null, "owner_name": null, "owner_rating": 0 },
-  {
-    "owner_image": "https://images.vinted.net/thumbs/f800/02ded_NMLMNyjurkbwHkJ6Ax6PtcYt.jpeg?1558972389-531bfacafd2522c43dd60deabf2e6551e5b98aff",
-    "owner_name": "joyceklok1",
-    "owner_rating": 5
-  },
-  { "owner_image": null, "owner_name": null, "owner_rating": 0 },
-  { "owner_image": null, "owner_name": "agneta-444", "owner_rating": 4 },
-  {
-    "owner_image": "https://images.vinted.net/thumbs/f800/02dd3_sqCdYwzmZvZD6SSxXCEv1KWj.jpeg?1570949722-ad826fbd73678facdde64ea6dcad8f73886052ea",
-    "owner_name": "mathildefernandez05",
-    "owner_rating": 5
-  }
+  { "owner_image": null, "owner_name": null, "owner_rating": 0 }
 ]

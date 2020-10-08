@@ -2,13 +2,17 @@ const puppeteer = require("puppeteer");
 const scrollPageToBottom = require("puppeteer-autoscroll-down");
 const fs = require("fs");
 const _ = require("lodash");
+const appRoot = require("app-root-path");
 
 const URL = "https://www.vinted.fr/";
 
 const saveToFile = (file, content) => {
-  fs.writeFile(`../data/${file}`, JSON.stringify(content), (err) => {
-    console.log(`content saved in ${file}`);
-    if (err) return console.log(err);
+  fs.writeFile(`${appRoot}/data/${file}`, JSON.stringify(content), (err) => {
+    if (err) {
+      return console.log(err);
+    } else {
+      console.log(`content saved in ${file}`);
+    }
   });
 };
 
@@ -23,7 +27,7 @@ const scrapHomePage = async () => {
   });
   await page.goto(URL, { waitUntil: "domcontentloaded" });
   /* await scrollPageToBottom(page); */
-  await page.waitFor(".feed-grid__item");
+  await page.waitForSelector(".feed-grid__item");
   const products = await page.evaluate(() => {
     const elements = Array.from(document.querySelectorAll(".feed-grid__item"));
     return elements.map((element) => {
@@ -63,6 +67,7 @@ const scrapHomePage = async () => {
     });
   });
   await browser.close();
+  console.log("scrapHomePage finished");
   return products;
 };
 
@@ -76,14 +81,19 @@ const scrapProduct = async (url) => {
     height: 1600,
   });
   await page.goto(url, { waitUntil: "domcontentloaded" });
-  await page.waitFor(".details-list--info");
+  await page.waitForSelector(".details-list--info");
   const product = await page.evaluate(() => {
     const product_name = document.querySelector(
       ".details-list--info div[itemprop='name']"
-    ).innerText;
+    )
+      ? document.querySelector(".details-list--info div[itemprop='name']")
+          .innerText
+      : null;
     const product_description = document.querySelector(
       ".details-list--info .u-text-wrap"
-    ).innerText;
+    )
+      ? document.querySelector(".details-list--info .u-text-wrap").innerText
+      : null;
     const product_pictures = Array.from(
       document.querySelectorAll(".item-photo")
     ).map((element) => {
@@ -117,6 +127,7 @@ const scrapProduct = async (url) => {
     };
   });
   await browser.close();
+  console.log("scrapProduct finished");
   return product;
 };
 
@@ -127,12 +138,15 @@ const scrapOwner = async (url) => {
       headless: false,
     });
     const page = await browser.newPage();
+
     await page.setViewport({
       width: 1600,
       height: 1600,
     });
+
     await page.goto(url, { waitUntil: "domcontentloaded" });
-    await page.waitFor(".profile__info");
+    await page.waitForSelector(".profile__info");
+
     const owner = await page.evaluate(() => {
       const owner_image = document.querySelector(
         ".profile__info img:first-child"
@@ -169,6 +183,8 @@ const scrapOwner = async (url) => {
       };
     });
     await browser.close();
+    console.log("scrapOwner finished");
+
     return owner;
   }
 };
@@ -176,6 +192,7 @@ const scrapOwner = async (url) => {
 const goScrapp = async (req, res, next) => {
   try {
     const products = await scrapHomePage();
+
     // SCRAP PRODUCTS
     for (let i = 0; i < products.length; i++) {
       const { product_link } = products[i];
@@ -186,8 +203,8 @@ const goScrapp = async (req, res, next) => {
     saveToFile("products.json", products);
     // SCRAP OWNERS
     const owners = [];
-    for (let i = 0; i < products.length; i++) {
-      const { owner_link, owner_name } = products[i];
+    for (let i = 0; i < products2.length; i++) {
+      const { owner_link, owner_name } = products2[i];
       if (!_.find(owners, { name: owner_name }) && owner_link) {
         const owner = await scrapOwner(owner_link);
         owners.push(owner);
