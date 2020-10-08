@@ -80,7 +80,6 @@ Create a new offer
 | `picture`     | Yes      | product picture
 
 <br>
-<br>
 
 | Headers        | Required | Description |
 | -------------- | -------- | ----------- |
